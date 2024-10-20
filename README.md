@@ -1,45 +1,12 @@
 [![Continuous Integration](https://github.com/kaiosilveira/replace-parameter-with-query-refactoring/actions/workflows/ci.yml/badge.svg)](https://github.com/kaiosilveira/replace-parameter-with-query-refactoring/actions/workflows/ci.yml)
 
-# Refactoring catalog repository template
-
-This is a quick template to help me get a new refactoring repo going.
-
-## Things to do after creating a repo off of this template
-
-1. Run `yarn tools:cli prepare-repository -r <repo_name>`. It will:
-
-- Update the `README.md` file with the actual repository name, CI badge, and commit history link
-- Update `package.json` with the repository's name and remote URL
-- Update the repo's homepage on GitHub with:
-  - A description
-  - A website link to https://github.com/kaiosilveira/refactoring
-  - The following labels: javascript, refactoring, replace-parameter-with-query-refactoring
-
-2. Replace the lorem ipsum text sections below with actual text
-
-## Useful commands
-
-- Generate markdown containing a diff with patch information based on a range of commits:
-
-```bash
-yarn tools:cli generate-diff -f <first_commit_sha> -l <last_commit_sha>
-```
-
-- To generate the commit history table for the last section, including the correct links:
-
-```bash
-yarn tools:cli generate-cmt-table -r replace-parameter-with-query-refactoring
-```
-
----
-
 ℹ️ _This repository is part of my Refactoring catalog based on Fowler's book with the same title. Please see [kaiosilveira/refactoring](https://github.com/kaiosilveira/refactoring) for more details._
 
 ---
 
 # Replace Parameter With Query
 
-**Formerly: Old name**
+**Formerly: Replace Parameter with Method**
 
 <table>
 <thead>
@@ -51,7 +18,10 @@ yarn tools:cli generate-cmt-table -r replace-parameter-with-query-refactoring
 <td>
 
 ```javascript
-result = initial.code;
+availableVacation(anEmployee, anEmployee.grade);
+
+function availableVacation(anEmployee, grade) {
+  // calculate vacation...
 ```
 
 </td>
@@ -59,11 +29,11 @@ result = initial.code;
 <td>
 
 ```javascript
-result = newCode();
+availableVacation(anEmployee);
 
-function newCode() {
-  return 'new code';
-}
+function availableVacation(amEmployee) {
+  const grade = anEmployee.grade;
+  // calculate vacation...
 ```
 
 </td>
@@ -71,58 +41,122 @@ function newCode() {
 </tbody>
 </table>
 
-**Inverse of: [Another refactoring](https://github.com/kaiosilveira/refactoring)**
+**Inverse of: [Replace Query with Parameter](https://github.com/kaiosilveira/replace-query-with-parameter-refactoring)**
 
-**Refactoring introduction and motivation** dolore sunt deserunt proident enim excepteur et cillum duis velit dolor. Aute proident laborum officia velit culpa enim occaecat officia sunt aute labore id anim minim. Eu minim esse eiusmod enim nulla Lorem. Enim velit in minim anim anim ad duis aute ipsum voluptate do nulla. Ad tempor sint dolore et ullamco aute nulla irure sunt commodo nulla aliquip.
+Data can take many shapes and form, and so does function signatures. Sometimes, though, we can easily derive values from a related top-level structure that we already have access to, therefore simplifying argument lists and reliefing callers of one more parameter. This refactoring helps with that.
 
 ## Working example
 
-**Working example general explanation** proident reprehenderit mollit non voluptate ea aliquip ad ipsum anim veniam non nostrud. Cupidatat labore occaecat labore veniam incididunt pariatur elit officia. Aute nisi in nulla non dolor ullamco ut dolore do irure sit nulla incididunt enim. Cupidatat aliquip minim culpa enim. Fugiat occaecat qui nostrud nostrud eu exercitation Lorem pariatur fugiat ea consectetur pariatur irure. Officia dolore veniam duis duis eu eiusmod cupidatat laboris duis ad proident adipisicing. Minim veniam consectetur ut deserunt fugiat id incididunt reprehenderit.
+Our working example is a simple program which calculates the final price of an `Order`, based on its item quantity, base price, and discount level. `Order` looks like this:
+
+```javascript
+export class Order {
+  constructor({ quantity, itemPrice }) {
+    this.quantity = quantity;
+    this.itemPrice = itemPrice;
+  }
+
+  get finalPrice() {
+    const basePrice = this.quantity * this.itemPrice;
+    let discountLevel;
+    if (this.quantity > 100) discountLevel = 2;
+    else discountLevel = 1;
+    return this.discountedPrice(basePrice, discountLevel);
+  }
+
+  discountedPrice(basePrice, discountLevel) {
+    switch (discountLevel) {
+      case 1:
+        return basePrice * 0.95;
+      case 2:
+        return basePrice * 0.9;
+    }
+  }
+}
+```
+
+Our goal here is to get rid of the duplicated logic around `discountLevel`.
 
 ### Test suite
 
-Occaecat et incididunt aliquip ex id dolore. Et excepteur et ea aute culpa fugiat consectetur veniam aliqua. Adipisicing amet reprehenderit elit qui.
+The imlpemented test suite for this example covers the border of the conditional logic around discount levels:
 
 ```javascript
-describe('functionBeingRefactored', () => {
-  it('should work', () => {
-    expect(0).toEqual(1);
+describe('Order', () => {
+  describe('finalprice', () => {
+    it('should apply discount level 1 if quantity is lower than 100', () => {
+      const order = new Order({ quantity: 10, itemPrice: 10 });
+      expect(order.finalPrice).toBe(95);
+    });
+
+    it('should apply discount level 1 if quantity is equal 100', () => {
+      const order = new Order({ quantity: 100, itemPrice: 10 });
+      expect(order.finalPrice).toBe(950);
+    });
+
+    it('should apply discount level 2 if quantity is higher than 100', () => {
+      const order = new Order({ quantity: 101, itemPrice: 10 });
+      expect(order.finalPrice).toBe(909);
+    });
   });
 });
 ```
 
-Magna ut tempor et ut elit culpa id minim Lorem aliqua laboris aliqua dolor. Irure mollit ad in et enim consequat cillum voluptate et amet esse. Fugiat incididunt ea nulla cupidatat magna enim adipisicing consequat aliquip commodo elit et. Mollit aute irure consequat sunt. Dolor consequat elit voluptate aute duis qui eu do veniam laborum elit quis.
+With that in place, we're good to go.
 
 ### Steps
 
-**Step 1 description** mollit eu nulla mollit irure sint proident sint ipsum deserunt ad consectetur laborum incididunt aliqua. Officia occaecat deserunt in aute veniam sunt ad fugiat culpa sunt velit nulla. Pariatur anim sit minim sit duis mollit.
+We started by introducing a `discountLevel` getter. This will strategically relief `finalPrice` of calculating its value:
 
 ```diff
-diff --git a/src/price-order/index.js b/src/price-order/index.js
-@@ -3,6 +3,11 @@
--module.exports = old;
-+module.exports = new;
++  get discountLevel() {
++    return this.quantity > 100 ? 2 : 1;
++  }
 ```
 
-**Step n description** mollit eu nulla mollit irure sint proident sint ipsum deserunt ad consectetur laborum incididunt aliqua. Officia occaecat deserunt in aute veniam sunt ad fugiat culpa sunt velit nulla. Pariatur anim sit minim sit duis mollit.
+Then, we replace the derivation of `discountLevel` at `finalPrice` with a call to the new `discountLevel` getter, effectively removing the need to calculate this parameter and allowing us to remove all the temps related to it:
 
 ```diff
-diff --git a/src/price-order/index.js b/src/price-order/index.js
-@@ -3,6 +3,11 @@
--module.exports = old;
-+module.exports = new;
+   get finalPrice() {
+     const basePrice = this.quantity * this.itemPrice;
+-    return this.discountedPrice(basePrice, discountLevel);
++    return this.discountedPrice(basePrice, this.discountLevel);
+   }
 ```
 
-And that's it!
+Going even further, we now can call the `discountLevel` getter directly at `discountedPrice`, instead of receiving it as argument:
+
+```diff
+   discountedPrice(basePrice, discountLevel) {
+-    switch (discountLevel) {
++    switch (this.discountLevel) {
+```
+
+And since the argument is now useless, we just remove it:
+
+```diff
+   get finalPrice() {
+     const basePrice = this.quantity * this.itemPrice;
+-    return this.discountedPrice(basePrice, this.discountLevel);
++    return this.discountedPrice(basePrice);
+   }
+
+-  discountedPrice(basePrice, discountLevel) {
++  discountedPrice(basePrice) {
+     switch (this.discountLevel) {
+```
+
+And that's all for this one!
 
 ### Commit history
 
 Below there's the commit history for the steps detailed above.
 
-| Commit SHA                                                                  | Message                  |
-| --------------------------------------------------------------------------- | ------------------------ |
-| [cmt-sha-1](https://github.com/kaiosilveira/replace-parameter-with-query-refactoring/commit-SHA-1) | description of commit #1 |
-| [cmt-sha-2](https://github.com/kaiosilveira/replace-parameter-with-query-refactoring/commit-SHA-2) | description of commit #2 |
-| [cmt-sha-n](https://github.com/kaiosilveira/replace-parameter-with-query-refactoring/commit-SHA-n) | description of commit #n |
+| Commit SHA                                                                                                                          | Message                                                                                             |
+| ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| [7fad9bc](https://github.com/kaiosilveira/replace-parameter-with-query-refactoring/commit/7fad9bc7b7ad52f6a69366ca3fa6b5e3b3251c0d) | introduce `discountLevel` getter                                                                    |
+| [025c71c](https://github.com/kaiosilveira/replace-parameter-with-query-refactoring/commit/025c71c461d05d027506416d483c52a5cbb03314) | replace derivation of `discountLevel` at `finalPrice` with a call to the new `discountLevel` getter |
+| [c5d4999](https://github.com/kaiosilveira/replace-parameter-with-query-refactoring/commit/c5d499998154dd12742d064b6c73cda4febff3ea) | call `discountLevel` getter instead of receiving it as argument at `discountedPrice`                |
+| [d490a84](https://github.com/kaiosilveira/replace-parameter-with-query-refactoring/commit/d490a849c62c1d36a54d4681271cfb317bb05a5c) | remove `discountLevel` argument at `discountedPrice`                                                |
 
 For the full commit history for this project, check the [Commit History tab](https://github.com/kaiosilveira/replace-parameter-with-query-refactoring/commits/main).
