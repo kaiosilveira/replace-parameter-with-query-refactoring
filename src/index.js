@@ -14,7 +14,7 @@ export class Order {
   }
 
   discountedPrice(basePrice, discountLevel) {
-    switch (discountLevel) {
+    switch (this.discountLevel) {
       case 1:
         return basePrice * 0.95;
       case 2:
