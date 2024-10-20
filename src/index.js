@@ -12,6 +12,10 @@ export class Order {
     return this.discountedPrice(basePrice, discountLevel);
   }
 
+  get discountLevel() {
+    return this.quantity > 100 ? 2 : 1;
+  }
+
   discountedPrice(basePrice, discountLevel) {
     switch (discountLevel) {
       case 1:
